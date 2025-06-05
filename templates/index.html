@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disaster Risk Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: url("{{ url_for('static', filename='bg.jpeg') }}") no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+        .glass-container {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="text-white font-sans">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 w-full bg-white py-4 px-6 flex justify-between items-center shadow-md z-50">
+        <h1 class="text-xl font-bold uppercase tracking-wider text-gray-900">Disaster Risk Assessment</h1>
+    </nav>
+
+    <!-- Marquee Section -->
+    <div class="w-full bg-red-600 text-white py-2 mt-16">
+        <marquee behavior="scroll" direction="left" scrollamount="7" class="text-lg font-semibold">
+            🌍 Stay Updated! | Real-time Disaster Alerts | Check Your Travel Safety Now! | Get Accurate Risk Reports! | Powered by NASA & USGS Data |
+        </marquee>
+    </div>
+
+    <!-- Main Layout: Form (Left) & About Section (Right) -->
+    <div class="flex flex-col md:flex-row justify-center items-center min-h-screen px-6 mt-10 space-x-0 md:space-x-10">
+        <!-- Form Section (Left) -->
+        <div class="glass-container max-w-lg w-full md:w-1/2 p-8 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-semibold text-blue-300 text-center">Check Your Travel Safety</h2>
+            <p class="text-gray-200 text-center mt-2">Assess potential disaster risks before traveling</p>
+
+            <!-- Input Fields -->
+            <div class="mt-6 space-y-4">
+                <label class="block font-semibold text-white">📍 Location:</label>
+                <input type="text" id="location" placeholder="Enter Location"
+                    class="w-full p-3 rounded-lg bg-transparent text-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+                <label class="block font-semibold text-white">📅 Date:</label>
+                <input type="date" id="date"
+                    class="w-full p-3 rounded-lg bg-transparent text-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+                <label class="block font-semibold text-white">⏰ Time:</label>
+                <input type="time" id="time"
+                    class="w-full p-3 rounded-lg bg-transparent text-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+
+            <!-- Buttons -->
+            <div class="mt-6 flex flex-col gap-4">
+                <button onclick="checkDisaster()" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition shadow-lg">
+                    Check Risk
+                </button>
+                <button onclick="downloadReport()" 
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-lg">
+                    📄 Download Report
+                </button>
+            </div>
+
+            <!-- Loading Animation -->
+            <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center text-2xl font-semibold text-white">
+                ⏳ Checking Disaster Risks...
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="mt-6 p-4 bg-transparent border border-gray-300 rounded-lg shadow-md text-white"></div>
+        </div>
+
+        <!-- About Section (Right) -->
+        <section id="about" class="glass-container max-w-lg w-full md:w-1/2 p-8 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-bold text-blue-300 text-center">🌟 About This Project</h2>
+            <p class="text-gray-200 mt-2 text-center">
+                This system provides real-time disaster risk assessment based on weather conditions, earthquake history, tsunami warnings, flood monitoring, and NASA satellite data.
+                The goal is to ensure safe travels by assessing potential risks beforehand.
+            </p>
+            
+            <h3 class="text-xl font-semibold mt-4 text-blue-300 text-center">📌 Key Features:</h3>
+            <ul class="list-disc list-inside text-gray-200 mt-2 space-y-2 text-center">
+                <li>🌦 Real-time Weather Forecasting</li>
+                <li>🌍 Earthquake & Tsunami Alerts</li>
+                <li>💧 Flood Monitoring</li>
+                <li>🛰 NASA Satellite Imagery Analysis</li>
+                <li>📄 Professional Report Generation</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white text-center py-4 mt-10 text-gray-900 border-t border-gray-400">
+        <p>© 2025 Disaster Risk Management | Stay Safe! 🌎</p>
+    </footer>
+
+
+
+
+
+
+    <script>
+        function checkDisaster() {
+            let location = document.getElementById("location").value;
+            let date = document.getElementById("date").value;
+            let time = document.getElementById("time").value;
+
+            if (!location || !date || !time) {
+                alert("Please enter all details.");
+                return;
+            }
+
+            document.getElementById("loadingPopup").style.display = "flex";
+
+            fetch('/check_disaster', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ location, date, time })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("loadingPopup").style.display = "none";
+                
+                let riskLevel = "No Risk ✅ Travel Safe!";
+                let riskClass = "low-risk";
+
+                if (data.earthquake.status === "failed" || data.tsunami[0].status === "failed") {
+                    riskLevel = "High Risk ❌ Avoid Travel!";
+                    riskClass = "high-risk";
+                } else if (data.flood[0].status === "failed") {
+                    riskLevel = "Medium Risk ⚠️ Travel With Caution!";
+                    riskClass = "medium-risk";
+                }
+
+                document.getElementById("results").innerHTML = `
+                    <h3>🚨 Risk Level: <span class="${riskClass}">${riskLevel}</span></h3>
+                    <p>📍 <b>Location:</b> ${data.location}</p>
+                    <p>📅 <b>Date & Time:</b> ${data.date_time}</p>
+                    <p>🌤 <b>Weather:</b> ${data.weather.weather}, ${data.weather.temperature}°C</p>
+                    <p>💨 <b>Wind Speed:</b> ${data.weather.wind_speed} m/s</p>
+                    <p>💧 <b>Humidity:</b> ${data.weather.humidity}%</p>
+                    <p>🌎 <b>Earthquake Risk:</b> ${data.earthquake.status === "failed" ? "⚠️ High" : "✅ Safe"}</p>
+                    <p>🌊 <b>Tsunami Risk:</b> ${data.tsunami[0].status === "failed" ? "⚠️ High" : "✅ Safe"}</p>
+                    <p>🚨 <b>Flood Risk:</b> ${data.flood[0].status === "failed" ? "⚠️ High" : "✅ Safe"}</p>
+                    <p>🛰 <b>NASA Flood Detection:</b> ${data.nasa_flood[0].status === "success" ? "<img src='" + data.nasa_flood[0].image + "' width='200'>" : "✅ No Flood"}</p>
+                `;
+            });
+        }
+
+        function downloadReport() {
+            let location = document.getElementById("location").value;
+            let date = document.getElementById("date").value;
+            let time = document.getElementById("time").value;
+
+            fetch('/download_report', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ location, date_time: date + " " + time })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                let link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "Disaster_Report.pdf";
+                link.click();
+            });
+        }
+    </script>
+
+</body>
+</html>
